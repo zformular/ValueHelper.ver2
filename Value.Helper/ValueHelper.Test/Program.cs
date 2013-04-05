@@ -9,6 +9,11 @@ using ValueHelper.TDCodeHelper.QR2DCodeHelper;
 using ValueHelper.TDCodeHelper.QR2DCodeHelper.Infrastructure;
 using System.Windows.Forms;
 using ValueHelper.FileHelper;
+using ValueHelper.Image;
+using System.Drawing;
+using ValueHelper.Math;
+using ValueHelper.IIS;
+using ValueHelper.DataBase;
 //using ValueHelper.OtherHelper;
 
 namespace ValueHelper.Test
@@ -109,9 +114,10 @@ namespace ValueHelper.Test
 
             #region MIMEHelper
 
-            var mime = "Content-Type: multipart/alternative; \r\n\tboundary=\"----=_Part_73323_510855019.1362313432376\"\r\nDate: Sun, 3 Mar 2013 20:23:52 +0800 (CST)\r\nFrom: zformular <zformular@163.com>\r\nSubject: =?GBK?B?0ru2/sj9y8TO5cH5xt+wy77Fyq7KrtK7yq62/squyP0=?=\r\n =?GBK?B?yq7LxMquzuXKrsH5yq7G38qusMvKrr7Ftv7Krrb+yq4=?=\r\n";
-            //mime = "Content-Transfer-Encoding: 8Bit\r\nContent-Type: multipart/mixed;\r\n\tboundary=\"----=_NextPart_5099C48D_D63B7690_6364F090\"\r\n";
-            var sad = ValueMIME.SerializeMIME(mime);
+            //var mime = "Content-Type: multipart/alternative; \r\n\tboundary=\"----=_Part_73323_510855019.1362313432376\"\r\nDate: Sun, 3 Mar 2013 20:23:52 +0800 (CST)\r\nFrom: zformular <zformular@163.com>\r\nSubject: =?GBK?B?0ru2/sj9y8TO5cH5xt+wy77Fyq7KrtK7yq62/squyP0=?=\r\n =?GBK?B?yq7LxMquzuXKrsH5yq7G38qusMvKrr7Ftv7Krrb+yq4=?=\r\n";
+            ////mime = "Content-Transfer-Encoding: 8Bit\r\nContent-Type: multipart/mixed;\r\n\tboundary=\"----=_NextPart_5099C48D_D63B7690_6364F090\"\r\n";
+            ////var mime = "Date: Mon, 25 Mar 2013 18:28:25 +0800\r\nFrom: \"=?gb2312?B?zNrRtsbz0rXTys/k?=\" <10000@qq.com>\r\nTo: \"=?gb2312?B?zNrRtsbz0rXTys/k08O7pw==?=\"\r\nSubject: =?gb2312?B?u7bTrcq508PM2tG2xvPStdPKz+Q=?=\r\nMessage-ID: <10000@qq.com>\r\nX-QQ-STYLE: 1\r\nContent-Type: text/html;\r\n        charset=\"gb2312\"\r\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n<head>\r\n\t<title></title>\r\n<style type=\"text/css\">\r\nbody{background:#ECECEC;font-family:\"lucida Grande\",Verdana;}\r\n.invite{width:606px;margin:0 auto;overflow:hidden;}\r\n.invite, .invite td, .invite th{border-collapse:collapse;padding:0;vertical-align:middle;}\r\n.invite th{font-weight:bold;font-size:16px;color:white;text-align:left;background:#3B5999;}\r\n.invite th .mailLogo{margin:-2px 5px 0 0; padding:0 0 0 30px;}\r\n.invite th div{height:65px;overflow:hidden;}\r\n.invite .borderLeft{width:4px;*width:3px;border-left:1px solid #EBEBEB;border-right:1px solid #C9C9C9;background:#E9E9E9;}\r\n.invite .borderRight{width:3px;border-left:1px solid #C9C9C9;border-right:1px solid #EBEBEB;background:#E9E9E9;}\r\n.invite h2{margin:26px 34px 16px;font-size:18px;font-weight:bold;}\r\n.invite p{color:#313131;display:block;font-size:14px;line-height:150%;padding:1px 34px 21px;margin:0;}\r\n.invite p.team, .invite p.team a{color:#999999;text-decoration:none;}\r\n.invite p.team a:hover{color:#999999;text-decoration:underline;}\r\n.invite a{color:#3B5999}\r\n</style>\r\n</head>\r\n<body>\r\n<div style=\"background:#ECECEC;\">\r\n<table class=\"invite\" align=\"center\" bgcolor=\"#ffffff\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\r\n\t<tr>\r\n\t\t<td colspan=\"4\" class=\"radius\" style=\"vertical-align:bottom;overflow:hidden;line-height:6px;font-size:0;\"><img src=\"http://exmail.qq.com/zh_CN/htmledition/images/newicon/sysmail/mail_invite_top.png\" alt=\"\" /></td>\r\n\t</tr>\r\n\t<tr>\r\n\t\t<td rowspan=\"2\" class=\"border borderLeft\"></td>\r\n\t\t<th width=\"416\"><img src=\"http://exmail.qq.com/zh_CN/htmledition/images/logo/logo_sysmail_biz_0.gif\" alt=\"mail企业邮箱\" class=\"mailLogo\"/>欢迎信</th>\r\n\t\t<th width=\"180\"><div><img src=\"http://exmail.qq.com/zh_CN/htmledition/images/bizmail/top_biz.gif\" class=\"mailBg\"/></div></th>\r\n\t\t<td rowspan=\"2\" class=\"border borderRight\"></td>\r\n\t</tr>\r\n\t<tr>\r\n\t\t<td colspan=\"2\">\r\n\t\t\t<p style=\"margin-top:20px;\">叶夏，您好：</p>\r\n\t\t\t<p>欢迎启用您的企业邮箱，请收藏登录地址 <a href=\"http://exmail.qq.com/login\" target=\"_blank\">http://exmail.qq.com/login</a>。<br/>\r\n\t\t\t如果您想通过Outlook，Foxmail来管理邮件，可在这里查看<a href=\"http://service.exmail.qq.com/cgi-bin/help?subtype=1&&id=28&&no=1000564\" target=\"_blank\">设置方法</a>。</p>\r\n\t\t\t<p>腾讯企业邮箱支持发送50MB普通附件，2GB超大附件。更有：</p>\r\n\t\t\t<p>\r\n\t\t\t<img src=\"http://exmail.qq.com/zh_CN/htmledition/images/bizmail/icon_bindqq.png\" style=\"vertical-align:middle;margin-right:4px\" height=\"18\" width=\"18px\"/>\r\n\t\t\t<strong>绑定QQ</strong><br/>\r\n\t\t\t<span style=\"margin-left:27px;\">新邮件将在QQ上提醒，还能一键登录，沟通更方便。</span>\r\n\t\t\t</p>\r\n\t\t\t<p>\r\n\t\t\t<img src=\"http://exmail.qq.com/zh_CN/htmledition/images/bizmail/icon_bindwx.png\" style=\"vertical-align:middle;margin-right:4px\" height=\"18\" width=\"18px\"/>\r\n\t\t\t<strong>微信提醒</strong><br/>\r\n\t\t\t<span style=\"margin-left:27px;\">微信助手帮你随时处理新来信、日程提醒，还能快捷查询同事联系方式 。</span>\r\n\t\t\t</p>\r\n\t\t\t<p>\r\n\t\t\t\t<img src=\"http://exmail.qq.com/zh_CN/htmledition/images/bizmail/icon_exsfile.gif\" style=\"vertical-align:middle;margin-right:4px\" height=\"18\" width=\"18px\"/>\r\n\t\t\t\t<strong>企业网盘</strong><br/>\r\n\t\t\t\t<span style=\"margin-left:27px;\">与同事共享文档、照片变得更简单，只需上传到企业网盘轻松共享。</span>\r\n\t\t\t</p>\r\n\t\t\t<p style=\"margin-left:27px;\">\r\n\t\t\t\t<a href=\"http://exmail.qq.com/cgi-bin/readtemplate?check=false&t=bizmail_learnmore.html\" target=\"_blank\">了解更多</a>\r\n\t\t\t</p>\r\n\t\t\t<p>\r\n\t\t\t\t祝您使用愉快。如果有任何疑惑，欢迎发信至 <a href=\"mailto:bizsupport@qq.com\">bizsupport@qq.com</a> 获取帮助。\r\n\t\t\t</p>\r\n\t\t\t<p class=\"team\">\r\n\t\t\t\t腾讯企业邮箱<br />\r\n\t\t\t\t<span style=\"background:#ddd;height:1px;width:100%;overflow:hidden;display:block;margin:2px 0;\"></span>\r\n\t\t\t\t腾讯企业邮箱门户：<a href=\"http://exmail.qq.com\" target=\"_blank\">http://exmail.qq.com</a><br/>\r\n\t\t\t\t企业邮箱帮助中心：<a href=\"http://service.exmail.qq.com\" target=\"_blank\">http://service.exmail.qq.com</a>\t\r\n\t\t\t</p>\r\n\t\t</td>\r\n\t</tr>\r\n\t<tr>\r\n\t\t<td colspan=\"4\"  style=\"vertical-align:top;line-height:5px;overflow:hidden;font-size:0;\"><img src=\"http://exmail.qq.com/zh_CN/htmledition/images/newicon/sysmail/mail_invite_bottom.png\" alt=\"\" /></td>\r\n\t</tr>\r\n</table>\r\n</div>\r\n</body>\r\n</html>\r\n";
+            //var sad = ValueMIME.SerializeMIME(mime);
 
             #endregion
 
@@ -187,7 +193,61 @@ namespace ValueHelper.Test
 
             //////////#endregion
 
-            Console.ReadLine();
+            #region ValueImage
+
+            //var imageHelper = ValueImage.GetInstance();
+            //var srcImage = System.Drawing.Image.FromFile(@"C:\Users\Administrator\Desktop\Image\logo.png");
+            //var zoomImage = imageHelper.ZoomImage(srcImage as Bitmap, 4F);
+            //zoomImage.Save(@"C:\Users\Administrator\Desktop\Image\zoom.png");
+
+            //var cutImage = imageHelper.CutImage(srcImage as Bitmap, 0, 0, srcimage.Width / 2, srcimage.Height / 2);
+            //cutImage.Save(@"C:\Users\Administrator\Desktop\Image\cut.png");
+
+            //var grayscalmaxImage = imageHelper.ConvertToGrayscale(srcImage as Bitmap, Image.Infrastructure.GrayscaleType.Maximum);
+            //grayscalmaxImage.Save(@"C:\Users\Administrator\Desktop\Image\RGBMax.png");
+
+            //var grayscalminImage = imageHelper.ConvertToGrayscale(srcImage as Bitmap, Image.Infrastructure.GrayscaleType.Minimal);
+            //grayscalminImage.Save(@"C:\Users\Administrator\Desktop\Image\RGBMin.png");
+
+            //var grayscalaverageImage = imageHelper.ConvertToGrayscale(srcImage as Bitmap, Image.Infrastructure.GrayscaleType.Average);
+            //grayscalaverageImage.Save(@"C:\Users\Administrator\Desktop\Image\RGBAverage.png");
+
+            //var graysvalweigthImage = imageHelper.ConvertToGrayscale(srcImage as Bitmap, 0.3F, 0.59F, 0.11F);
+            //graysvalweigthImage.Save(@"C:\Users\Administrator\Desktop\Image\RGBWeight.png");
+
+            #endregion
+
+            #region ValueMath
+
+            var mathHelper = ValueMath.GetInstance();
+
+            var list = new Int32[] { 10, 2, 505, 54, 11, 45, 12, 6, 15, 2, 7, 56 };
+
+            //mathHelper.ChurningDescending(list);
+
+            //mathHelper.ChurningAscending(list);
+
+            //mathHelper.InsertionDescending(list);
+
+            mathHelper.MergenAscending(list, 0, list.Length);
+
+            #endregion
+
+            //// Console.ReadLine();
+            //var iisHelper = new IISHelper("localhost");
+            //iisHelper.CreateWebSite(new WebSiteInfo
+            // {
+            //     Physicaldir = @"D:\",
+            //     Virtualdir = String.Empty,
+            //     Name = "test",
+            //     IP = String.Empty,
+            //     Port = "8010",
+            //     ThreadPoolName = "testpool"
+            // });
+
+            //var dbHelper = new ValueDBHelper(".\\sql2005", "sa", "123456");
+
+            //dbHelper.AttachDataBase("OrderDB", @"D:\OrderBD\OrderDB.mdf", @"D:\OrderBD\OrderDB_log.ldf");
         }
     }
 }

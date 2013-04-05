@@ -20,7 +20,7 @@ namespace ValueHelper.MIMEHelper.Serializer
     {
         public DataSerializer(String mime)
         {
-            MIME = mime;
+            MIME = String.Concat("\r\n", mime);
         }
 
         public String SerializeFrom()
@@ -88,6 +88,12 @@ namespace ValueHelper.MIMEHelper.Serializer
         {
             var value = data ?? MIME;
             var subject = String.Empty;
+            var matchs = Regex.Matches(value, MIMETemplate.Subject);
+            foreach (var item in matchs)
+            {
+
+            }
+
             var groups = Regex.Match(value, MIMETemplate.Subject).Groups;
             for (int i = 1; i <= 5; i++)
             {

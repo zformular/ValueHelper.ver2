@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -41,6 +42,7 @@
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
@@ -52,7 +54,19 @@
     <Compile Include="FileHelper\FileManager.cs" />
     <Compile Include="FileHelper\OfficeHelper\AccessHelp.cs" />
     <Compile Include="FileHelper\Windows\TextHelper.cs" />
+    <Compile Include="IIS\IISHelper.cs" />
+    <Compile Include="IIS\WebSiteInfo.cs" />
+    <Compile Include="Image\Infrastructure\Chain.cs" />
+    <Compile Include="Image\Infrastructure\FrequencyDimension.cs" />
+    <Compile Include="Image\Infrastructure\GrayscaleType.cs" />
+    <Compile Include="Image\Infrastructure\MedianFilterFrame.cs" />
+    <Compile Include="Image\Infrastructure\OperatorSet.cs" />
+    <Compile Include="Image\ValueImage.cs" />
+    <Compile Include="Image\ValueImagePart1.cs" />
+    <Compile Include="Image\ValueImagePart2.cs" />
     <Compile Include="Infrastructure\ValueNode.cs" />
+    <Compile Include="Math\Infrastructure\SortMode.cs" />
+    <Compile Include="Math\ValueMath.cs" />
     <Compile Include="OtherHelper\DateHelper.cs" />
     <Compile Include="OtherHelper\JSONHelper.cs" />
     <Compile Include="TDCodeHelper\BasicStruct\Converter.cs" />
@@ -87,6 +101,7 @@
     <Compile Include="TDCodeHelper\QR2DCodeHelper\Serializer\NumericSerializer.cs" />
     <Compile Include="TDCodeHelper\QR2DCodeHelper\ValueSerializer.cs" />
     <Compile Include="TDCodeHelper\QR2DCodeHelper\Value2DCode.cs" />
+    <Compile Include="DataBase\ValueDBHelper.cs" />
     <Compile Include="ValueExtension\CharExtension.cs" />
     <Compile Include="ValueSocket\Infrastructure\AsyncUserToken.cs" />
     <Compile Include="ValueSocket\Infrastructure\BufferManager.cs" />
@@ -120,6 +135,7 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

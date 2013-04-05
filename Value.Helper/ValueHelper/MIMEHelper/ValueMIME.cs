@@ -119,6 +119,9 @@ namespace ValueHelper.MIMEHelper
         private static void serializeMIME(ref MIMEModel model, String boundary, String mime)
         {
             var partials = pickupPartial(boundary, mime);
+            if (partials.Length == 0 && !String.IsNullOrEmpty(mime))
+                model.Add(MIMEPrefix.BodyHtml, mime.Split(new String[] { "\r\n\r\n" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+
             for (int i = 0; i < partials.Length; i++)
             {
                 serializeMIME(ref model, partials[i]);

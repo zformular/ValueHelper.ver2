@@ -145,6 +145,26 @@ namespace ValueHelper.Infrastructure
             return ToString(',', ';');
         }
 
+        public TKey[] KeyClone()
+        {
+            var list = new TKey[keyvalList.Count];
+            for (int i = 0; i < keyvalList.Count; i++)
+            {
+                list[i] = keyvalList[i].Key;
+            }
+            return list;
+        }
+
+        public TValue[] ValueClone()
+        {
+            var list = new TValue[keyvalList.Count];
+            for (int i = 0; i < keyvalList.Count; i++)
+            {
+                list[i] = keyvalList[i].Value;
+            }
+            return list;
+        }
+
         #region IEnumerable 成员
 
         public IEnumerator GetEnumerator()
