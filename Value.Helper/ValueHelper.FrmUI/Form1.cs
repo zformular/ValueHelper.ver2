@@ -289,5 +289,6 @@ namespace ValueHelper.FrmUI
             //}
             //bimt.Save("D:\\ts.jpg");
         }
+
     }
 }

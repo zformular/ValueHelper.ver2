@@ -308,64 +308,63 @@ namespace ValueHelper.Image
             ValueImage.UnlockBits(rgbBytes);
         }
 
-        public void AmphilinearityInterpolation(Bitmap srcImage, float timesX, float timeY)
-        {
-            Byte[] rgbBytes = ValueImage.LockBits(srcImage, ImageLockMode.ReadWrite);
-            Int32 length = rgbBytes.Length;
-            Int32 height = srcImage.Height;
-            Int32 width = length / height;
-            Int32 halfWidth = width / 2;
-            Int32 halfHeight = height / 2;
+        //public void AmphilinearityInterpolation(Bitmap srcImage, float timesX, float timeY)
+        //{
+        //    Byte[] rgbBytes = ValueImage.LockBits(srcImage, ImageLockMode.ReadWrite);
+        //    Int32 length = rgbBytes.Length;
+        //    Int32 height = srcImage.Height;
+        //    Int32 width = length / height;
+        //    Int32 halfWidth = width / 2;
+        //    Int32 halfHeight = height / 2;
 
 
 
-            Int32 xz, yz;
-            Int32 tempWidth, tempHeight;
-            float tempX, tempY, p, q;
-            Byte[] tempArray = new Byte[length];
-            for (int i = 0; i < height; i++)
-            {
-                for (int j = 0; j < width; j++)
-                {
-                    tempHeight = i - halfHeight;
-                    tempWidth = j - halfHeight;
-                    tempX = tempWidth / timesX;
-                    tempY = tempHeight / timeY;
+        //    Int32 xz, yz;
+        //    Int32 tempWidth, tempHeight;
+        //    float tempX, tempY, p, q;
+        //    Byte[] tempArray = new Byte[length];
+        //    for (int i = 0; i < height; i++)
+        //    {
+        //        for (int j = 0; j < width; j++)
+        //        {
+        //            tempHeight = i - halfHeight;
+        //            tempWidth = j - halfHeight;
+        //            tempX = tempWidth / timesX;
+        //            tempY = tempHeight / timeY;
 
-                    if (tempWidth > 0)
-                        xz = (Int32)tempX;
-                    else
-                        xz = (Int32)(tempX - 1);
-                    if (tempHeight > 0)
-                        yz = (Int32)tempY;
-                    else
-                        yz = (Int32)(tempY - 1);
+        //            if (tempWidth > 0)
+        //                xz = (Int32)tempX;
+        //            else
+        //                xz = (Int32)(tempX - 1);
+        //            if (tempHeight > 0)
+        //                yz = (Int32)tempY;
+        //            else
+        //                yz = (Int32)(tempY - 1);
 
-                    p = tempX - xz;
-                    q = tempY - yz;
+        //            p = tempX - xz;
+        //            q = tempY - yz;
 
-                    tempWidth = xz + halfWidth;
-                    tempHeight = yz + halfHeight;
+        //            tempWidth = xz + halfWidth;
+        //            tempHeight = yz + halfHeight;
 
-                    if (tempWidth < 0 || (tempWidth + 1) >= width ||
-                        tempHeight < 0 || (tempHeight + 1) >= height)
-                    {
-                        tempArray[i * width + j] = 255;
-                    }
-                    else
-                    {
-                        tempArray[i * width + j] = (Byte)(
-                            (1.0 - q) * ((1.0 - p) * rgbBytes[tempHeight * width] +
-                            (1.0 - p) * q * rgbBytes[width] +
-                            p * rgbBytes[tempHeight * width + tempWidth + 1]) +
-                            q * ((1.0 - p) * rgbBytes[(tempHeight + 1) * width + tempWidth] +
-                            p * rgbBytes[(tempHeight + 1) * width + 1 + tempWidth]));
-                    }
-                }
-            }
+        //            if (tempWidth < 0 || (tempWidth + 1) >= width ||
+        //                tempHeight < 0 || (tempHeight + 1) >= height)
+        //            {
+        //                tempArray[i * width + j] = 255;
+        //            }
+        //            else
+        //            {
+        //                tempArray[i * width + j] = (Byte)(
+        //                   (1.0 - q) * ((1.0 - p) * rgbBytes[tempHeight * width] + p * rgbBytes[tempHeight * width + tempWidth + 1]) +
+        //                   q * ((1.0 - p) * rgbBytes[(tempHeight + 1) * width + tempWidth] + p * rgbBytes[(tempHeight + 1) * width + 1 + tempWidth]));
 
-            ValueImage.UnlockBits(rgbBytes);
-        }
+        //            }
+        //        }
+        //    }
+        //    rgbBytes = (Byte[])tempArray.Clone();
+
+        //    ValueImage.UnlockBits(rgbBytes);
+        //}
 
         #endregion
 
