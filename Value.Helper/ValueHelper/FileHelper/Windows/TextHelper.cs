@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using ValueHelper.FileHelper.Base;
+using System.Text;
 
 namespace ValueHelper.FileHelper.Windows
 {
-    public class TextHelper : FileBase.FileBase
+    public class TextHelper : FileBase
     {
         public TextHelper() { }
 
@@ -25,37 +27,50 @@ namespace ValueHelper.FileHelper.Windows
 
         public override bool CreateFile()
         {
+            return this.CreateFile(null, null);
+        }
+
+        public override bool CreateFile(string fileName)
+        {
+            return this.CreateFile(fileName, null);
+        }
+
+        public override bool CreateFile(string fileName, string text)
+        {
+            if (!String.IsNullOrEmpty(fileName))
+                base.SetParams(fileName);
+
             if (CheckParams())
             {
                 if (File.Exists(base.FileName))
                     return false;
 
-                base.CreateDirectory();
-                return createFile();
+                try
+                {
+                    base.CreateDirectory();
+                    FileStream fileStream = new FileStream(base.FileName, FileMode.Create);
+                    if (!String.IsNullOrEmpty(text))
+                    {
+                        Byte[] bytes = Encoding.Default.GetBytes(text);
+                        fileStream.Write(bytes, 0, bytes.Length);
+                    }
+                    fileStream.Close();
+                    fileStream.Dispose();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
             return false;
-        }
-
-        private bool createFile()
-        {
-            try
-            {
-                FileStream fileStream = new FileStream(base.FileName, FileMode.Create);
-                fileStream.Close();
-                fileStream.Dispose();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
         }
 
         #endregion
 
         #region Read
 
-        public String ReadText()
+        public override string Read()
         {
             if (!CheckParams())
                 throw new ArgumentNullException("请先绑定文件名");
@@ -66,11 +81,27 @@ namespace ValueHelper.FileHelper.Windows
             return File.ReadAllText(base.FileName);
         }
 
+        public override string Read(System.Text.Encoding encode)
+        {
+            if (!CheckParams())
+                throw new ArgumentNullException("请先绑定文件名");
+
+            if (!File.Exists(base.FileName))
+                throw new ArgumentNullException("文件不存在");
+
+            return File.ReadAllText(base.FileName, encode);
+        }
+
         #endregion
 
         #region Write
 
-        public Boolean Write(String context, Boolean append)
+        public override bool Write(string text)
+        {
+            return this.Write(text, false);
+        }
+
+        public override bool Write(string text, bool append)
         {
             if (!CheckParams())
                 throw new ArgumentNullException("请先绑定文件名");
@@ -80,7 +111,7 @@ namespace ValueHelper.FileHelper.Windows
             try
             {
                 StreamWriter streamWriter = new StreamWriter(base.FileName, append);
-                streamWriter.Write(context);
+                streamWriter.Write(text);
                 streamWriter.Close();
                 return true;
             }
@@ -90,7 +121,7 @@ namespace ValueHelper.FileHelper.Windows
             }
         }
 
-        public Boolean WriteLine(String context, Boolean append)
+        public override bool Write(string text, System.Text.Encoding encode)
         {
             if (!CheckParams())
                 throw new ArgumentNullException("请先绑定文件名");
@@ -100,15 +131,26 @@ namespace ValueHelper.FileHelper.Windows
 
             try
             {
-                StreamWriter streamWriter = new StreamWriter(base.FileName, append);
-                streamWriter.WriteLine(context);
-                streamWriter.Close();
+                FileStream fileStream = new FileStream(base.FileName, FileMode.Open);
+                Byte[] bytes = encode.GetBytes(text);
+                fileStream.Write(bytes, 0, bytes.Length);
+                fileStream.Close();
                 return true;
             }
             catch
             {
                 return false;
             }
+        }
+
+        public override bool WriteLine(string text)
+        {
+            return this.WriteLine(text, Encoding.Default);
+        }
+
+        public override bool WriteLine(string text, System.Text.Encoding encode)
+        {
+            return this.Write(String.Concat(text, Environment.NewLine), encode);
         }
 
         #endregion

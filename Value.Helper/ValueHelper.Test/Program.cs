@@ -2,16 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ValueHelper.EncryptHelper;
+using ValueHelper.Encrypt;
 using ValueHelper.Infrastructure;
-using ValueHelper.MIMEHelper;
-using ValueHelper.TDCodeHelper.QR2DCodeHelper;
-using ValueHelper.TDCodeHelper.QR2DCodeHelper.Infrastructure;
+using ValueHelper.MIME;
 using System.Windows.Forms;
 using ValueHelper.FileHelper;
-using ValueHelper.Image;
 using System.Drawing;
-using ValueHelper.Math;
 using ValueHelper.IIS;
 using ValueHelper.DataBase;
 //using ValueHelper.OtherHelper;
@@ -217,21 +213,21 @@ namespace ValueHelper.Test
 
             #endregion
 
-            #region ValueMath
+            //#region ValueMath
 
-            var mathHelper = ValueMath.GetInstance();
+            //var mathHelper = ValueMath.GetInstance();
 
-            var list = new Int32[] { 10, 2, 505, 54, 11, 45, 12, 6, 15, 2, 7, 56 };
+            //var list = new Int32[] { 10, 2, 505, 54, 11, 45, 12, 6, 15, 2, 7, 56 };
 
-            //mathHelper.ChurningDescending(list);
+            ////mathHelper.ChurningDescending(list);
 
-            //mathHelper.ChurningAscending(list);
+            ////mathHelper.ChurningAscending(list);
 
-            //mathHelper.InsertionDescending(list);
+            ////mathHelper.InsertionDescending(list);
 
-            mathHelper.MergenAscending(list, 0, list.Length);
+            //mathHelper.MergenAscending(list, 0, list.Length);
 
-            #endregion
+            //#endregion
 
             //// Console.ReadLine();
             //var iisHelper = new IISHelper("localhost");

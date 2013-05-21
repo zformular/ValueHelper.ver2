@@ -2,13 +2,19 @@
 
 namespace ValueHelper.Image.Infrastructure
 {
+    /// <summary>
+    ///  算法算子
+    /// </summary>
     public class OperatorSet
     {
         #region 拉普拉斯算子
 
-        public static Int32[] laplacianOperator3 = new Int32[] { 0, -1, 0, -1, 3, -1, 0, -1, 0 };
+        public static Int32[] laplacianOperator1 = new Int32[] { 0, 1, 0, 1, -4, 1, 0, 1, 0 };
+        public static Int32[] laplacianOperator2 = new Int32[] { 1, 1, 1, 1, -8, 1, 1, 1, 1 };
+        public static Int32[] laplacianOperator3 = new Int32[] { -1, 2, -1, 2, -4, 2, -1, 2, -1 };
         public static Int32[] laplacianOperator4 = new Int32[] { 0, -1, 0, -1, 4, -1, 0, -1, 0 };
         public static Int32[] laplacianOperator5 = new Int32[] { 0, -1, 0, -1, 5, -1, 0, -1, 0 };
+        public static Int32[] laplacianOperator6 = new Int32[] { 0, -1, 0, -1, 3, -1, 0, -1, 0 };
         public static Int32[] setlaplacianOperator(Int32 number)
         {
             var list = new Int32[9];
@@ -45,17 +51,17 @@ namespace ValueHelper.Image.Infrastructure
 
         #region Prewitt算子
 
-        public static Int32[] prewittOperator1 = new Int32[] { 1, 1, 1, 0, 0, 0, -1, -1, -1 };
+        public static Int32[] prewittOperatorX = new Int32[] { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
+        public static Int32[] prewittOperatorY = new Int32[] { 1, 1, 1, 0, 0, 0, -1, -1, -1 };
         public static Int32[] prewittOperator2 = new Int32[] { 0, 1, 1, -1, 0, 1, -1, -1, 0 };
-        public static Int32[] prewittOperator3 = new Int32[] { -1, 0, 1, -1, 0, 1, -1, 0, 1 };
 
         #endregion
 
         #region Sobel算子
 
-        public static Int32[] sobelOperator1 = new Int32[] { -1, -2, -1, 0, 0, 0, 1, 2, 1 };
+        public static Int32[] sobelOperatorX = new Int32[] { -1, 0, 1, -2, 0, 2, -1, 0, 1 };
+        public static Int32[] sobelOperatorY = new Int32[] { 1, 2, 1, 0, 0, 0, -1, -2, -1 };
         public static Int32[] sobelOperator2 = new Int32[] { 0, 1, 1, -1, 0, 1, -1, -1, 0 };
-        public static Int32[] sobelOperator3 = new Int32[] { -1, 0, 1, -2, 0, 2, -1, 0, 1 };
 
         #endregion
 
@@ -72,6 +78,11 @@ namespace ValueHelper.Image.Infrastructure
         public static Int32[] kirschOperator1 = new Int32[] { 3, 3, 3, 3, 0, 3, -5, -5, -5 };
         public static Int32[] kirschOperator2 = new Int32[] { 3, 3, 3, -5, 0, 3, -5, -5, 3 };
         public static Int32[] kirschOperator3 = new Int32[] { -5, 3, 3, -5, 0, 3, -5, 3, 3 };
+        public static Int32[] kirschOperator4 = new Int32[] { 3, 3, 3, 3, 0, -5, 3, -5, -5 };
+        public static Int32[] kirschOperator5 = new Int32[] { 3, 3, -5, 3, 0, -5, 3, 3, -5 };
+        public static Int32[] kirschOperator6 = new Int32[] { 3, -5, -5, 3, 0, -5, 3, 3, 3 };
+        public static Int32[] kirschOperator7 = new Int32[] { -5, -5, -5, 3, 0, 3, 3, 3, 3 };
+        public static Int32[] kirschOperator8 = new Int32[] { -5, -5, 3, -5, 0, 3, 3, 3, 3 };
 
         #endregion
 
@@ -102,6 +113,13 @@ namespace ValueHelper.Image.Infrastructure
             0, 0, -1, -1, -1, -2, -3, -3, -3, -3, -3, -2, -1, -1, -1, 0, 0, 
             0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 
             0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0 };
+
+        #endregion
+
+        #region Roberts算子
+
+        public static Int32[] robertOperatorX = { 0, 1, -1, 0 };
+        public static Int32[] robertOperatorY = { 1, 0, 0, -1 };
 
         #endregion
     }

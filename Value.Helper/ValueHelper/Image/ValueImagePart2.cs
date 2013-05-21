@@ -1,222 +1,130 @@
 ﻿using System;
+using System.Linq;
 using System.Drawing;
-using ValueHelper.Image.Infrastructure;
-using System.Collections.Generic;
 using System.Drawing.Imaging;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using ValueHelper.Image.Infrastructure;
 
 namespace ValueHelper.Image
 {
     public partial class ValueImage
     {
-        #region 线性点运算
+        #region 直方图
 
         /// <summary>
-        ///  对图像已指定像素按 kx+b 线性变换
+        ///  直方图均衡化
         /// </summary>
-        /// <param name="slope">斜率</param>
-        /// <param name="displacements">平移</param>
-        public void LinearChange(Bitmap srcImage, float slope, float displacements, FrequencyDimension dimension)
+        /// <param name="srcImage"></param>
+        /// <returns></returns>
+        public void HistEqualization(Bitmap srcImage)
         {
-            var width = srcImage.Width;
-            var height = srcImage.Height;
+            Int32[] frequency = GetFrequency(srcImage);
 
-            var rect = new Rectangle(0, 0, width, height);
-            var bmpData = srcImage.LockBits(rect, ImageLockMode.ReadWrite, srcImage.PixelFormat);
-            var ptr = bmpData.Scan0;
-            var byteLength = bmpData.Stride * height;
-            var rgbBytes = new Byte[byteLength];
-            Marshal.Copy(ptr, rgbBytes, 0, byteLength);
+            Byte[] rgbBytes = LockBits(srcImage, ImageLockMode.ReadWrite);
 
-            float gr = 0, gg = 0, gb = 0;
-            for (int i = 0; i < byteLength; i += 3)
+            Byte temp;
+            var tempArray = new Int32[256];
+            // 映射的像素集
+            var pixelMap = new Byte[256];
+
+            // 生成累计归一化直方图
+            // 并生成映射表
+            for (int i = 0; i < 256; i++)
             {
-                switch (dimension)
+                if (i % RealWidth >= RealWidth)
                 {
-                    case FrequencyDimension.RGB:
-                        gr = rgbBytes[i + 2] * slope + displacements;
-                        gg = rgbBytes[i + 1] * slope + displacements;
-                        gb = rgbBytes[i] * slope + displacements;
-                        break;
-                    case FrequencyDimension.R:
-                        gr = rgbBytes[i + 2] * slope + displacements;
-                        gg = gr;
-                        gb = gr;
-                        break;
-                    case FrequencyDimension.G:
-                        gg = rgbBytes[i + 1] * slope + displacements;
-                        gr = gg;
-                        gb = gg;
-                        break;
-                    case FrequencyDimension.B:
-                        gb = rgbBytes[i] * slope + displacements;
-                        gr = gb;
-                        gg = gb;
-                        break;
-                }
-                rgbBytes[i + 2] = (Byte)gr;
-                rgbBytes[i + 1] = (Byte)gg;
-                rgbBytes[i] = (Byte)gb;
-            }
-            Marshal.Copy(rgbBytes, 0, ptr, byteLength);
-            srcImage.UnlockBits(bmpData);
-
-        }
-
-        #endregion
-
-        #region 反色
-
-        /// <summary>
-        ///  反色
-        /// </summary>
-        public Bitmap InvertColor(Bitmap srcImage)
-        {
-            return this.InvertColor(srcImage, FrequencyDimension.RGB);
-        }
-
-        /// <summary>
-        ///  反色
-        /// </summary>
-        public Bitmap InvertColor(Bitmap srcImage, FrequencyDimension diemnsion)
-        {
-            var width = srcImage.Width;
-            var height = srcImage.Height;
-            var dstImage = new Bitmap(width, height);
-            for (int i = 0; i < width; i++)
-            {
-                for (int j = 0; j < height; j++)
-                {
-                    var pixel = srcImage.GetPixel(i, j);
-                    Int32 gr = 0, gg = 0, gb = 0;
-                    switch (diemnsion)
-                    {
-                        case FrequencyDimension.RGB:
-                            gr = 255 - pixel.R;
-                            gg = 255 - pixel.G;
-                            gb = 255 - pixel.B;
-                            break;
-                        case FrequencyDimension.R:
-                            gr = gg = gb = 255 - pixel.R;
-                            break;
-                        case FrequencyDimension.G:
-                            gr = gg = gb = 255 - pixel.G;
-                            break;
-                        case FrequencyDimension.B:
-                            gr = gg = gb = 255 - pixel.B;
-                            break;
-                    }
-                    dstImage.SetPixel(i, j, Color.FromArgb(gr, gg, gb));
-                }
-            }
-            return dstImage;
-        }
-
-        #endregion
-
-        #region 平移
-
-        /// <summary>
-        ///  将图像移动x,y个单位
-        /// </summary>
-        /// <param name="x">水平位移</param>
-        /// <param name="y">垂直位移</param>
-        public void Move(Bitmap srcImage, Int32 x, Int32 y)
-        {
-            var rgbBytes = ValueImage.LockBits(srcImage, ImageLockMode.ReadWrite);
-
-            var tempArray = new Byte[rgbBytes.Length];
-            for (int i = 0; i < tempArray.Length; i++)
-            {
-                tempArray[i] = 255;
-            }
-
-            var length = rgbBytes.Length;
-            var height = srcImage.Height;
-            var width = length / height;
-
-            for (int i = 0; i < length; i++)
-            {
-                // 行
-                var row = i / width;
-                // 列
-                var col = i % width;
-
-                var nx = (col + 3 * x);
-                var ny = (row + y) * width;
-                // 如果超出一行则抛弃或者小于0
-                if (nx < 0) continue;
-                if (nx + 2 > width) continue;
-
-                var newPos = ny + nx;
-                if (newPos < 0) continue;
-                // 如果超出数组的退出循环
-                if (newPos >= length) break;
-                var pos = row * width + col;
-                tempArray[newPos] = rgbBytes[pos];
-            }
-
-            rgbBytes = (Byte[])tempArray.Clone();
-
-            ValueImage.UnlockBits(rgbBytes);
-        }
-
-        #endregion
-
-        #region 镜像
-
-        public void HoriMirror(Bitmap srcImage)
-        {
-            var rgbBytes = ValueImage.LockBits(srcImage, ImageLockMode.ReadWrite);
-            var length = rgbBytes.Length;
-            var height = srcImage.Height;
-            var width = length / height;
-
-            var splitPoint = width * 0.5F;
-
-            var tempArray = new Byte[length];
-            for (int i = 0; i < length; i++)
-            {
-                tempArray[i] = 255;
-            }
-
-            for (int i = 0; i < length; i += 3)
-            {
-                var row = i / width;
-                var col = i % width;
-
-                if (col == splitPoint)
-                {
-                    var xx = row * width + col;
-                    tempArray[xx] = rgbBytes[xx];
-                    tempArray[xx + 1] = rgbBytes[xx + 1];
-                    tempArray[xx + 2] = rgbBytes[xx + 2];
-
-                    i = (row + 1) * width;
+                    i = (i / Width + 1) * Width - 3;
                     continue;
                 }
 
-                var ny = 2 * splitPoint - col;
-
-                var nx = row * width;
-                var newPos = (Int32)(nx + ny);
-                var pos = (Int32)(row * width + col);
-                if (newPos < 0) continue;
-                if (newPos + 2 > length) break;
-
-                tempArray[newPos] = rgbBytes[pos];
-                tempArray[pos] = rgbBytes[newPos];
-                tempArray[newPos + 1] = rgbBytes[pos + 1];
-                tempArray[pos + 1] = rgbBytes[newPos + 1];
-                tempArray[newPos + 2] = rgbBytes[pos + 2];
-                tempArray[pos + 2] = rgbBytes[newPos + 2];
+                if (i != 0)
+                {
+                    tempArray[i] = tempArray[i - 1] + frequency[i];
+                }
+                else
+                    tempArray[0] = frequency[0];
+                pixelMap[i] = (Byte)(255.0 * tempArray[i] / Length + 0.5);
             }
-            rgbBytes = (Byte[])tempArray.Clone();
 
-            ValueImage.UnlockBits(rgbBytes);
+            for (int i = 0; i < Length; i++)
+            {
+                temp = rgbBytes[i];
+                rgbBytes[i] = pixelMap[temp];
+            }
+            UnlockBits(rgbBytes);
+        }
+
+        /// <summary>
+        ///  直方图匹配
+        /// </summary>
+        public void HistMatch(Bitmap srcImage, Int32[] histogram)
+        {
+            // 获得源图像直方图
+            Int32[] frequency = this.GetFrequency(srcImage);
+            Int32 maxPixel = mathHelper.MaxIndex(frequency);
+            Int32 length = frequency.Length;
+
+            // 内存法操作图像
+            Byte[] rgbBytes = LockBits(srcImage, ImageLockMode.ReadWrite);
+
+            // 计算该直方图各灰度的累计分布函数
+            Double[] Hc = new Double[length];
+            Hc[0] = frequency[0];
+            for (int i = 1; i < length; i++)
+            {
+                Hc[i] = (Hc[i - 1] + frequency[i]) / (Double)Length;
+            }
+
+            // 直方图匹配算法
+            Double diffA = 0D, diffB = 0D;
+            Int32 k = 0;
+            Byte[] mapPixel = new Byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                diffB = 1;
+                for (int j = 0; j < length; j++)
+                {
+                    diffA = System.Math.Abs(Hc[i] - histogram[j]);
+
+                    //                 1.0乘以10的-8次方
+                    // 找到2个累计分布函数最相似的位置
+                    if (diffA - diffB < 1.0E-08)
+                    {
+                        // 记下差值
+                        diffB = diffA;
+                        k = j;
+                    }
+                    else
+                    {
+                        // 已找到为相似位置,记录并退出
+                        k = j - 1;
+                        break;
+                    }
+                }
+
+                // 如果达到最大灰度级,标志未处理灰度数,并推出循环
+                if (k == 255)
+                {
+                    for (int l = 0; l < length; l++)
+                    {
+                        mapPixel[l] = (Byte)k;
+                    }
+                    break;
+                }
+                mapPixel[i] = (Byte)k;
+            }
+
+            for (int i = 0; i < rgbBytes.Length; i++)
+            {
+                rgbBytes[i] = mapPixel[rgbBytes[i]];
+            }
+
+            UnlockBits(rgbBytes);
         }
 
         #endregion
+
 
         #region 切割图片
 
@@ -260,7 +168,7 @@ namespace ValueHelper.Image
         public void NearestInterpolation(Bitmap srcImage, float timesX, float timesY)
         {
             Int32 height = srcImage.Height;
-            byte[] rgbBytes = ValueImage.LockBits(srcImage, ImageLockMode.ReadWrite);
+            byte[] rgbBytes = LockBits(srcImage, ImageLockMode.ReadWrite);
             Int32 length = rgbBytes.Length;
             Int32 width = length / height;
 
@@ -305,12 +213,12 @@ namespace ValueHelper.Image
             }
             rgbBytes = (Byte[])tempArray.Clone();
 
-            ValueImage.UnlockBits(rgbBytes);
+            UnlockBits(rgbBytes);
         }
 
         //public void AmphilinearityInterpolation(Bitmap srcImage, float timesX, float timeY)
         //{
-        //    Byte[] rgbBytes = ValueImage.LockBits(srcImage, ImageLockMode.ReadWrite);
+        //    Byte[] rgbBytes = LockBits(srcImage, ImageLockMode.ReadWrite);
         //    Int32 length = rgbBytes.Length;
         //    Int32 height = srcImage.Height;
         //    Int32 width = length / height;
@@ -363,7 +271,7 @@ namespace ValueHelper.Image
         //    }
         //    rgbBytes = (Byte[])tempArray.Clone();
 
-        //    ValueImage.UnlockBits(rgbBytes);
+        //    UnlockBits(rgbBytes);
         //}
 
         #endregion
@@ -413,242 +321,6 @@ namespace ValueHelper.Image
             graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
             graphics.DrawImage(srcImage, 0, 0, dstWidht, dstHeight);
             return dstBitmap;
-        }
-
-        #endregion
-
-        #region 灰度图
-
-        /// <summary>
-        ///  转化为灰度图
-        /// </summary>
-        public void ConvertToGrayscale(Bitmap srcImage, GrayscaleType type)
-        {
-            var width = srcImage.Width;
-            var height = srcImage.Height;
-
-            // 图形矩阵大小
-            var rect = new Rectangle(0, 0, width, height);
-            // 以可读写方式锁定全部位图像素
-            var bmpData = srcImage.LockBits(rect, ImageLockMode.ReadWrite, srcImage.PixelFormat);
-            // 得到图像首地址
-            var ptr = bmpData.Scan0;
-            // 确定字节长度
-            var byteLength = bmpData.Stride * height;
-            var rgbBytes = new Byte[byteLength];
-            // 复制被锁定的位图像素值到该数组内
-            Marshal.Copy(ptr, rgbBytes, 0, byteLength);
-
-            var g = 0;
-            // 灰度化
-            for (int i = 0; i < rgbBytes.Length; i += 3)
-            {
-                switch (type)
-                {
-                    case GrayscaleType.Maximum:
-                        g = mathHelper.Max(rgbBytes[i + 2], rgbBytes[i + 1], rgbBytes[i]);
-                        break;
-                    case GrayscaleType.Minimal:
-                        g = mathHelper.Min(rgbBytes[i + 2], rgbBytes[i + 1], rgbBytes[i]);
-                        break;
-                    case GrayscaleType.Average:
-                        g = mathHelper.Average(rgbBytes[i + 2], rgbBytes[i + 1], rgbBytes[i]);
-                        break;
-                }
-
-                rgbBytes[i + 2] = rgbBytes[i + 1] = rgbBytes[i] = (Byte)g;
-            }
-            // 把数组赋值回位图
-            Marshal.Copy(rgbBytes, 0, ptr, byteLength);
-            // 解锁
-            srcImage.UnlockBits(bmpData);
-        }
-
-        /// <summary>
-        ///  转化为灰度图(加权灰度图)
-        /// </summary>
-        public void ConvertToGrayscale(Bitmap srcImage, float weightR, float weightG, float weightB)
-        {
-            var width = srcImage.Width;
-            var height = srcImage.Height;
-
-            var rect = new Rectangle(0, 0, width, height);
-            var bmpData = srcImage.LockBits(rect, ImageLockMode.ReadWrite, srcImage.PixelFormat);
-            var ptr = bmpData.Scan0;
-            var byteLength = bmpData.Stride * height;
-            var rgbBytes = new Byte[byteLength];
-            Marshal.Copy(ptr, rgbBytes, 0, byteLength);
-
-            var g = 0F;
-            for (int i = 0; i < byteLength; i += 3)
-            {
-                g = weightR * rgbBytes[i + 2] + weightG * rgbBytes[i + 1] + weightB * rgbBytes[i];
-                rgbBytes[i + 2] = rgbBytes[i + 1] = rgbBytes[i] = (Byte)g;
-            }
-            Marshal.Copy(rgbBytes, 0, ptr, byteLength);
-            srcImage.UnlockBits(bmpData);
-        }
-
-        #endregion
-
-        #region 灰度拉伸
-
-        public void GrayscaleStretch(Bitmap srcImage, FrequencyDimension dimension)
-        {
-            var width = srcImage.Width;
-            var height = srcImage.Height;
-            //var frequency = GetFrequency(srcImage, dimension);
-            //var min = mathHelper.MinIndex(frequency);
-            //var max = mathHelper.MaxIndex(frequency);
-
-            var rect = new Rectangle(0, 0, width, height);
-            var bmpDate = srcImage.LockBits(rect, ImageLockMode.ReadWrite, srcImage.PixelFormat);
-            var ptr = bmpDate.Scan0;
-            var byteLength = bmpDate.Stride * height;
-            var rgbBytes = new Byte[byteLength];
-            Marshal.Copy(ptr, rgbBytes, 0, byteLength);
-
-            Int32 min = 255, max = 0;
-            for (int i = 0; i < byteLength; i += 3)
-            {
-                switch (dimension)
-                {
-                    case FrequencyDimension.RGB:
-                    case FrequencyDimension.R:
-                        if (rgbBytes[i + 2] < min)
-                            min = rgbBytes[i + 2];
-
-                        if (rgbBytes[i + 2] > max)
-                            max = rgbBytes[i + 2];
-                        break;
-                    case FrequencyDimension.G:
-                        if (rgbBytes[i + 1] < min)
-                            min = rgbBytes[i + 1];
-
-                        if (rgbBytes[i + 1] > max)
-                            max = rgbBytes[i + 1];
-                        break;
-                    case FrequencyDimension.B:
-                        if (rgbBytes[i] < min)
-                            min = rgbBytes[i];
-
-                        if (rgbBytes[i] > max)
-                            max = rgbBytes[i];
-                        break;
-                }
-            }
-
-
-            Int32 gr = 0, gg = 0, gb = 0;
-            for (int i = 0; i < byteLength; i += 3)
-            {
-                switch (dimension)
-                {
-                    case FrequencyDimension.RGB:
-                        gr = (Int32)(255F / (max - min) * (rgbBytes[i + 2] - min) + 0.5);
-                        gg = (Int32)(255F / (max - min) * (rgbBytes[i + 1] - min) + 0.5);
-                        gb = (Int32)(255F / (max - min) * (rgbBytes[i] - min) + 0.5);
-                        break;
-                    case FrequencyDimension.R:
-                        gr = (Int32)(255F / (max - min) * (rgbBytes[i + 2] - min) + 0.5);
-                        gg = gr;
-                        gb = gr;
-                        break;
-                    case FrequencyDimension.G:
-                        gg = (Int32)(255F / (max - min) * (rgbBytes[i + 1] - min) + 0.5);
-                        gr = gg;
-                        gb = gg;
-                        break;
-                    case FrequencyDimension.B:
-                        gb = (Int32)(255F / (max - min) * (rgbBytes[i] - min) + 0.5);
-                        gr = gb;
-                        gg = gb;
-                        break;
-                }
-                rgbBytes[i + 2] = (Byte)gr;
-                rgbBytes[i + 1] = (Byte)gg;
-                rgbBytes[i] = (Byte)gb;
-            }
-            Marshal.Copy(rgbBytes, 0, ptr, byteLength);
-            srcImage.UnlockBits(bmpDate);
-        }
-
-        /// <summary>
-        ///  图像灰度拉伸
-        /// </summary>
-        /// <param name="x1">2拉伸点的坐标x1</param>
-        /// <param name="y1">2拉伸点的坐标y1</param>
-        /// <param name="x2">2拉伸点的坐标x2</param>
-        /// <param name="y2">2拉伸点的坐标y2</param>
-        public void GrayscaleStretch(Bitmap srcImage, Int32 x1, Int32 y1, Int32 x2, Int32 y2)
-        {
-            this.GrayscaleStretch(srcImage, FrequencyDimension.RGB, x1, y1, x2, y2);
-        }
-
-        /// <summary>
-        ///  图像灰度拉伸
-        /// </summary>
-        /// <param name="x1">2拉伸点的坐标x1</param>
-        /// <param name="y1">2拉伸点的坐标y1</param>
-        /// <param name="x2">2拉伸点的坐标x2</param>
-        /// <param name="y2">2拉伸点的坐标y2</param>
-        public void GrayscaleStretch(Bitmap srcImage, FrequencyDimension dimension, Int32 x1, Int32 y1, Int32 x2, Int32 y2)
-        {
-            var width = srcImage.Width;
-            var height = srcImage.Height;
-            var frequence = this.GetFrequency(srcImage);
-
-            var rect = new Rectangle(0, 0, width, height);
-            var bmpData = srcImage.LockBits(rect, ImageLockMode.ReadWrite, srcImage.PixelFormat);
-            var ptr = bmpData.Scan0;
-            var byteLength = bmpData.Stride * height;
-            var rgbBytes = new Byte[byteLength];
-            Marshal.Copy(ptr, rgbBytes, 0, byteLength);
-
-            Int32 gr = 0, gg = 0, gb = 0;
-            for (int i = 0; i < byteLength; i += 3)
-            {
-                switch (dimension)
-                {
-                    case FrequencyDimension.RGB:
-                        gr = grayscaleStretchAlgorithm(rgbBytes[i + 2], x1, y1, x2, y2);
-                        gg = grayscaleStretchAlgorithm(rgbBytes[i + 1], x1, y1, x2, y2);
-                        gb = grayscaleStretchAlgorithm(rgbBytes[i], x1, y1, x2, y2);
-                        break;
-                    case FrequencyDimension.R:
-                        gr = grayscaleStretchAlgorithm(rgbBytes[i + 2], x1, y1, x2, y2);
-                        gg = gr;
-                        gb = gr;
-                        break;
-                    case FrequencyDimension.G:
-                        gg = grayscaleStretchAlgorithm(rgbBytes[i + 1], x1, y1, x2, y2);
-                        gr = gg;
-                        gb = gg;
-                        break;
-                    case FrequencyDimension.B:
-                        gr = grayscaleStretchAlgorithm(rgbBytes[i + 2], x1, y1, x2, y2);
-                        gg = gr;
-                        gb = gr;
-                        break;
-                }
-                rgbBytes[i + 2] = (Byte)gr;
-                rgbBytes[i + 1] = (Byte)gg;
-                rgbBytes[i] = (Byte)gb;
-            }
-            Marshal.Copy(rgbBytes, 0, ptr, byteLength);
-            srcImage.UnlockBits(bmpData);
-        }
-
-        private Int32 grayscaleStretchAlgorithm(Int32 x, Int32 x1, Int32 y1, Int32 x2, Int32 y2)
-        {
-            var g = 0;
-            if (x < x1)
-                g = (Int32)((y2 / x1) * x);
-            else if (x >= x1 && x <= x2)
-                g = (Int32)(((y2 - y1) / (x2 - x1)) * (x - x1) + y1);
-            else if (x > x2)
-                g = (Int32)(((255 - y2) / (255 - x2)) * (x - x2) + y2);
-            return g;
         }
 
         #endregion
@@ -773,7 +445,7 @@ namespace ValueHelper.Image
             var width = srcImage.Width;
             var height = srcImage.Height;
 
-            var dstImage = new Bitmap(width, height);
+            var dstImage = new Bitmap(width, height, srcImage.PixelFormat);
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)
@@ -802,132 +474,6 @@ namespace ValueHelper.Image
                 }
             }
             return dstImage;
-        }
-
-        #endregion
-
-        #region 直方图
-
-        /// <summary>
-        ///  直方图均衡化
-        /// </summary>
-        /// <param name="srcImage"></param>
-        /// <returns></returns>
-        public void HistEqualization(Bitmap srcImage)
-        {
-            var width = srcImage.Width;
-            var height = srcImage.Height;
-            var number = width * height;
-
-            var rect = new Rectangle(0, 0, width, height);
-            var bmpData = srcImage.LockBits(rect, ImageLockMode.ReadWrite, srcImage.PixelFormat);
-            var ptr = bmpData.Scan0;
-            var byteLength = bmpData.Stride * height;
-            var rgbBytes = new Byte[byteLength];
-            Marshal.Copy(ptr, rgbBytes, 0, byteLength);
-
-            Byte temp;
-            var tempArray = new Int32[256];
-            // 指定像素的个数
-            var countPixel = new Int32[256];
-            // 映射的像素集
-            var pixelMap = new Byte[256];
-
-            // 计算获得直方图
-            for (int i = 0; i < byteLength; i++)
-            {
-                temp = rgbBytes[i];
-                countPixel[temp]++;
-            }
-
-            // 生成累计归一化直方图
-            // 并生成映射表
-            for (int i = 0; i < 256; i++)
-            {
-                if (i != 0)
-                {
-                    tempArray[i] = tempArray[i - 1] + countPixel[i];
-                }
-                else
-                    tempArray[0] = countPixel[0];
-                pixelMap[i] = (Byte)(255.0 * tempArray[i] / byteLength + 0.5);
-            }
-
-            for (int i = 0; i < byteLength; i++)
-            {
-                temp = rgbBytes[i];
-                rgbBytes[i] = pixelMap[temp];
-            }
-            Marshal.Copy(rgbBytes, 0, ptr, byteLength);
-            srcImage.UnlockBits(bmpData);
-        }
-
-        /// <summary>
-        ///  直方图匹配
-        /// </summary>
-        public void HistMatch(Bitmap srcImage, Int32[] histogram)
-        {
-            // 获得源图像直方图
-            var frequency = this.GetFrequency(srcImage);
-            var maxPixel = mathHelper.MaxIndex(frequency);
-
-            // 内存法操作图像
-            var rgbBytes = ValueImage.LockBits(srcImage, ImageLockMode.ReadWrite);
-
-            var length = frequency.Length;
-            var Hc = new Double[length];
-
-            // 计算该直方图各灰度的累计分布函数
-            Hc[0] = frequency[0];
-            for (int i = 1; i < length; i++)
-            {
-                Hc[i] = (Hc[i - 1] + frequency[i]) / (Double)length;
-            }
-
-            Double diffA = 0D, diffB = 0D;
-            var k = 0;
-            var mapPixel = new Byte[length];
-            for (int i = 0; i < length; i++)
-            {
-                diffB = 1;
-                for (int j = 0; j < length; j++)
-                {
-                    diffA = System.Math.Abs(Hc[i] - histogram[j]);
-
-                    //                 1.0乘以10的-8次方
-                    // 找到2个累计分布函数最相似的位置
-                    if (diffA - diffB < 1.0E-08)
-                    {
-                        // 记下差值
-                        diffB = diffA;
-                        k = j;
-                    }
-                    else
-                    {
-                        // 已找到为相似位置,记录并退出
-                        k = j - 1;
-                        break;
-                    }
-                }
-
-                // 如果达到最大灰度级,标志未处理灰度数,并推出循环
-                if (k == 255)
-                {
-                    for (int l = 0; l < length; l++)
-                    {
-                        mapPixel[l] = (Byte)k;
-                    }
-                    break;
-                }
-                mapPixel[i] = (Byte)k;
-            }
-
-            for (int i = 0; i < rgbBytes.Length; i++)
-            {
-                rgbBytes[i] = mapPixel[rgbBytes[i]];
-            }
-
-            ValueImage.UnlockBits(rgbBytes);
         }
 
         #endregion
@@ -1459,7 +1005,7 @@ namespace ValueHelper.Image
 
             #endregion
 
-            var dstImage = new Bitmap(width, height);
+            var dstImage = new Bitmap(width, height, srcImage.PixelFormat);
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)

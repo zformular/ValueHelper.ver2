@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using ValueHelper.Infrastructure;
 using ValueHelper.Math.Infrastructure;
+using System.Diagnostics;
 
 namespace ValueHelper.Math
 {
@@ -616,6 +617,263 @@ namespace ValueHelper.Math
         }
 
         #endregion
-    }
 
+        #region 傅里叶变换
+
+        /// <summary>
+        ///  快速傅里叶变化
+        ///  条件: 长度必须是以2为底的整数次幂
+        /// </summary>
+        /// <param name="sourceData">待变化序列</param>
+        /// <param name="countN">序列长度</param>
+        public Complex[] FFT(Complex[] sourceData, Int32 countN)
+        {
+            // 傅里叶变化的级数
+            Int32 r = Convert.ToInt32(System.Math.Log(countN, 2));
+
+            // 加权系数
+            Complex[] w = new Complex[countN / 2];
+            Complex[] interVar1 = new Complex[countN];
+            Complex[] interVar2 = new Complex[countN];
+
+            interVar1 = (Complex[])sourceData.Clone();
+            for (int i = 0; i < countN / 2; i++)
+            {
+                Double angle = -i * System.Math.PI * 2 / countN;
+                w[i] = new Complex(System.Math.Cos(angle), System.Math.Sin(angle));
+            }
+
+            // 核心部分
+            for (int i = 0; i < r; i++)
+            {
+                Int32 interval = 1 << i;
+                Int32 halfN = 1 << (r - i);
+                for (int j = 0; j < interval; j++)
+                {
+                    Int32 gap = j * halfN;
+                    for (int k = 0; k < halfN / 2; k++)
+                    {
+                        interVar2[k + gap] = interVar1[k + gap] + interVar1[k + gap + halfN / 2];
+                        interVar2[k + halfN / 2 + gap] = (interVar1[k + gap] - interVar1[k + gap + halfN / 2]) * w[k * interval];
+                    }
+                }
+                interVar1 = (Complex[])interVar2.Clone();
+            }
+
+            for (uint j = 0; j < countN; j++)
+            {
+                uint rev = 0;
+                uint num = j;
+                for (int i = 0; i < r; i++)
+                {
+                    rev <<= 1;
+                    rev |= num & 1;
+                    num >>= 1;
+                }
+                interVar2[rev] = interVar1[j];
+            }
+
+            return interVar2;
+        }
+
+        /// <summary>
+        ///  快速傅里叶逆变换
+        /// </summary>
+        /// <param name="sourceData">带变化序列</param>
+        /// <param name="countN">序列长度</param>
+        public Complex[] IFFT(Complex[] sourceData, Int32 countN)
+        {
+            // 共轭变换
+            for (int i = 0; i < countN; i++)
+            {
+                sourceData[i] = sourceData[i].Conjugate();
+            }
+
+            Complex[] interVar = new Complex[countN];
+            // 调用快速傅里叶变化
+            interVar = this.FFT(sourceData, countN);
+
+            // 共轭变化,并除以长度
+            for (int i = 0; i < countN; i++)
+            {
+                interVar[i] = new Complex(interVar[i].Real / countN, -interVar[i].Imaginary / countN);
+            }
+
+            return interVar;
+        }
+
+        #endregion
+
+        #region 小波变换
+
+        /// <summary>
+        ///  一维小波变换
+        /// </summary>
+        /// <param name="scaleIn">小波变换前的尺度,即平滑信号</param>
+        /// <param name="lowpass">与尺度函数相关的低通滤波器</param>
+        /// <param name="highpass">与小波函数相关的高通滤波器</param>
+        /// <param name="scaleOut">小波变换后的尺度系数</param>
+        /// <param name="wavelet">小波变换后的小波系数,即细节信号</param>
+        public void Wavelet(Double[] scaleIn, Double[] lowpass, Double[] highpass, out Double[] scaleOut, out Double[] wavelet)
+        {
+            Int32 temp;
+            // 变换前的尺度的长度
+            Int32 scaleLen = scaleIn.Length;
+            // 低通滤波的长度
+            Int32 lowpassLen = lowpass.Length;
+            // 输出的尺度
+            scaleOut = new Double[scaleLen / 2];
+            // 输出的小波系数
+            wavelet = new Double[scaleLen / 2];
+
+            for (int i = 0; i < scaleLen / 2; i++)
+            {
+                scaleOut[i] = 0.0;
+                wavelet[i] = 0.0;
+
+                for (int j = 0; j < lowpassLen; j++)
+                {
+                    temp = (j + i * 2) % scaleLen;
+
+                    scaleOut[i] += lowpass[j] * scaleIn[temp];
+                    wavelet[i] += highpass[j] * scaleIn[temp];
+                }
+            }
+        }
+
+        /// <summary>
+        ///  一维小波逆变换
+        /// </summary>
+        /// <param name="lowpass">与尺度函数相关的低通滤波器</param>
+        /// <param name="highpass">与尺度函数相关的高通滤波器</param>
+        /// <param name="scaleIn">小波逆变换前的尺度系数,即平滑信号</param>
+        /// <param name="wavelet">小波逆变换前的小波系数,即细节信号</param>
+        /// <param name="scaleOut">小波逆变换后的尺度系数,即平滑信号</param>
+        public void IWavelet(Double[] lowpass, Double[] highpass, Double[] scaleIn, Double[] wavelet, out Double[] scaleOut)
+        {
+            Int32 temp;
+            Int32 scaleLen = scaleIn.Length;
+            Int32 lowpassLen = lowpass.Length;
+            scaleOut = new Double[scaleLen * 2];
+            for (int i = 0; i < scaleLen; i++)
+            {
+                scaleOut[2 * i + 1] = 0.0;
+                scaleOut[2 * i] = 0.0;
+                for (int j = 0; j < lowpassLen / 2; j++)
+                {
+                    temp = (i - j + scaleLen) % scaleLen;
+                    scaleOut[2 * i + 1] = lowpass[2 * j + 1] * scaleIn[temp] + highpass[2 * j + 1] * wavelet[temp];
+                    scaleOut[2 * i] = lowpass[2 * j] * scaleIn[temp] + highpass[2 * j] * wavelet[temp];
+                }
+            }
+        }
+
+        /// <summary>
+        ///  二维小波变换
+        /// </summary>
+        /// <param name="width">二维信号宽度</param>
+        /// <param name="height">二维信号高度</param>
+        /// <param name="lowpass">与尺度函数相关的低通滤波器</param>
+        /// <param name="highpass">与小波函数相关的高通滤波器</param>
+        /// <param name="series">关于小波变换级数的参数</param>
+        public void Wavelet2D(ref Double[] rectangleData, Int32 width, Int32 height, Double[] lowpass, Double[] highpass, Int32 series)
+        {
+            Double[] hs = new Double[width / series];
+            Double[] hs1 = new Double[width / (2 * series)];
+            Double[] hw1 = new Double[width / (2 * series)];
+            for (int i = 0; i < height / series; i++)
+            {
+                for (int j = 0; j < width / series; j++)
+                {
+                    hs[j] = rectangleData[i * width / series + j];
+                }
+
+                this.Wavelet(hs, lowpass, highpass, out hs1, out hw1);
+
+                for (int j = 0; j < width / series; j++)
+                {
+                    if (j < width / (2 * series))
+                        rectangleData[i * width / series + j] = hs1[j];
+                    else
+                        rectangleData[i + width / series + j] = hw1[j - width / (2 * series)];
+                }
+            }
+
+            Double[] vs = new Double[height / series];
+            Double[] vs1 = new Double[height / (2 * series)];
+            Double[] vw1 = new Double[height / (2 * series)];
+            for (int i = 0; i < width / series; i++)
+            {
+                for (int j = 0; j < height / series; j++)
+                {
+                    vs[j] = rectangleData[j * width / series + i];
+                }
+
+                this.Wavelet(vs, lowpass, highpass, out vs1, out vw1);
+
+                for (int j = 0; j < height / series; j++)
+                {
+                    if (j < height / (2 * series))
+                        rectangleData[j * width / series + i] = vs1[j];
+                    else
+                        rectangleData[j * width / series + i] = vw1[j - height / (2 * series)];
+                }
+            }
+        }
+
+        /// <summary>
+        ///  二维小波逆变换
+        /// </summary>
+        /// <param name="width">二维信号宽度</param>
+        /// <param name="height">二维信号高度</param>
+        /// <param name="lowpass">与尺度函数相关的低通滤波器</param>
+        /// <param name="highpass">与小波函数相关的高通滤波器</param>
+        /// <param name="series">关于小波变换级数的参数</param>
+        public void IWavelet2D(ref Double[] rectangleData, Int32 width, Int32 height, Double[] lowpass, Double[] highpass, Int32 series)
+        {
+            Double[] hs = new Double[width / series];
+            Double[] hs1 = new Double[width / (2 * series)];
+            Double[] hw1 = new Double[width / (2 * series)];
+
+            for (int i = 0; i < width / series; i++)
+            {
+                for (int j = 0; j < height / series; j++)
+                {
+                    if (j < height / (2 * series))
+                        hs1[j] = rectangleData[j * width / series + i];
+                    else
+                        hw1[j - height / (2 * series)] = rectangleData[j * width / series + i];
+                }
+
+                this.IWavelet(lowpass, highpass, hs1, hw1, out hs);
+
+                for (int j = 0; j < height / series; j++)
+                {
+                    rectangleData[j * width / series + i] = hs[j];
+                }
+            }
+
+            Double[] vs = new Double[height / series];
+            Double[] vs1 = new Double[height / (2 * series)];
+            Double[] vw1 = new Double[height / (2 * series)];
+            for (int i = 0; i < height / series; i++)
+            {
+                for (int j = 0; j < width / series; j++)
+                {
+                    if (j < width / (2 * series))
+                        vs1[j] = rectangleData[i * width / series + j];
+                    else
+                        vw1[j - width / (2 * series)] = rectangleData[i * width / series + j];
+                }
+                this.IWavelet(lowpass, highpass, vs1, vw1, out vs);
+
+                for (int j = 0; j < width / series; j++)
+                {
+                    rectangleData[i * width / series + j] = vs[j];
+                }
+            }
+        }
+
+        #endregion
+    }
 }
